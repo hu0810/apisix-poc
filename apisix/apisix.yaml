@@ -1,0 +1,9 @@
+# apisix/apisix.yaml
+routes:
+  - uri: /hello
+    upstream:
+      type: roundrobin
+      nodes:
+        "host.docker.internal:8080": 1
+    name: hello-route
+#END

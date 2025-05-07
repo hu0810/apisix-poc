@@ -1,0 +1,36 @@
+# docker-compose.yml
+version: '3.9'
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: demo
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  apisix:
+    image: apache/apisix:3.11.0-debian
+    container_name: apisix
+    restart: always
+    depends_on:
+      - mariadb
+    # 將 host.docker.internal 映射到宿主機網關
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9080:9080"  # APISIX HTTP
+      - "9443:9443"  # APISIX HTTPS
+    volumes:
+      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml
+      - ./apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml
+
+volumes:
+  db_data:
