@@ -1,0 +1,29 @@
+routes:
+
+  - uri: /api/users/*
+    methods: ['GET']
+    service_id: 1
+    plugins: {"rate-limit": {"count": 10, "time_window": 60}}
+
+
+services:
+
+  - id: 1
+    name: user-service
+    upstream_id: 1
+    plugins: {"key-auth": {"enable": true}}
+
+
+upstreams:
+
+  - id: 1
+    name: user-upstream
+    type: roundrobin
+    scheme: http
+    nodes: {"127.0.0.1:8001": 1, "127.0.0.1:8002": 1}
+
+
+consumers:
+
+  - username: alice
+    plugins: {"key-auth": {"key": "alice-key-123"}}

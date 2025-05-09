@@ -1,0 +1,30 @@
+routes:
+{% for route in routes %}
+  - uri: {{ route.uri }}
+    methods: {{ route.methods }}
+    service_id: {{ route.service_id }}
+    plugins: {{ route.plugins | tojson }}
+{% endfor %}
+
+services:
+{% for svc in services %}
+  - id: {{ svc.id }}
+    name: {{ svc.name }}
+    upstream_id: {{ svc.upstream_id }}
+    plugins: {{ svc.plugins | tojson }}
+{% endfor %}
+
+upstreams:
+{% for up in upstreams %}
+  - id: {{ up.id }}
+    name: {{ up.name }}
+    type: {{ up.type }}
+    scheme: {{ up.scheme }}
+    nodes: {{ up.nodes | tojson }}
+{% endfor %}
+
+consumers:
+{% for c in consumers %}
+  - username: {{ c.username }}
+    plugins: {{ c.plugins | tojson }}
+{% endfor %}

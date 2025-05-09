@@ -1,0 +1,160 @@
+routes:
+- uri: /user/info
+  methods:
+  - GET
+  vars:
+  - - http_appname
+    - ==
+    - app1
+  service_id: service_1
+  plugins:
+    limit-count:
+      count: 50
+      time_window: 60
+      key: http_appname
+      rejected_code: 503
+    jwt-auth:
+      key: key_app1
+      secret: secret_app1
+- uri: /user/info
+  methods:
+  - GET
+  vars:
+  - - http_appname
+    - ==
+    - app2
+  service_id: service_1
+  plugins:
+    limit-count:
+      count: 100
+      time_window: 60
+      key: http_appname
+      rejected_code: 503
+    jwt-auth:
+      key: key_app2
+      secret: secret_app2
+- uri: /order/list
+  methods:
+  - POST
+  vars:
+  - - http_appname
+    - ==
+    - app1
+  service_id: service_2
+  plugins:
+    limit-count:
+      count: 30
+      time_window: 60
+      key: http_appname
+      rejected_code: 503
+    jwt-auth:
+      key: key_app1
+      secret: secret_app1
+- uri: /report/data
+  methods:
+  - GET
+  vars:
+  - - http_appname
+    - ==
+    - app3
+  - - http_region
+    - ==
+    - tw
+  service_id: service_3
+  plugins:
+    limit-count:
+      count: 20
+      time_window: 60
+      key: http_appname
+      rejected_code: 503
+    jwt-auth:
+      key: key_app3
+      secret: secret_app3
+services:
+- id: service_1
+  name: user-api
+  upstream_id: upstream_1
+- id: service_2
+  name: order-api
+  upstream_id: upstream_2
+- id: service_3
+  name: report-api
+  upstream_id: upstream_3
+upstreams:
+- id: upstream_1
+  name: my-upstream
+  type: roundrobin
+  scheme: http
+  pass_host: rewrite
+  upstream_host: backend.example.com
+  keepalive: 60
+  timeout:
+    connect: 3
+    send: 5
+    read: 10
+  nodes:
+  - host: 192.168.0.10
+    port: 8080
+    weight: 1
+  - host: 192.168.0.11
+    port: 8080
+    weight: 1
+  checks:
+    active:
+      http_path: /status
+      host: backend.example.com
+      port: 8080
+      healthy:
+        interval: 5
+        successes: 2
+      unhealthy:
+        interval: 5
+        http_failures: 3
+        tcp_failures: 2
+        timeouts: 2
+    passive:
+      healthy:
+        http_statuses:
+        - 200
+        - 302
+        successes: 3
+      unhealthy:
+        http_statuses:
+        - 500
+        - 503
+        http_failures: 2
+        tcp_failures: 2
+        timeouts: 2
+consumers:
+- username: client_app1
+  vars:
+    http_appname: app1
+- username: client_app2
+  vars:
+    http_appname: app2
+- username: client_app3
+  vars:
+    http_appname: app3
+    http_region: tw
+- username: consumer_beta
+  vars:
+    http_appname: beta_app
+  plugins:
+    beta_auth:
+      personaType: tenant
+      beta_key: beta_secret_123
+- username: consumer_alpha
+  vars:
+    http_appname: alpha_app
+  plugins:
+    alpha_auth:
+      key: alpha_secret_456
+- username: consumer_both
+  vars:
+    http_appname: both_app
+  plugins:
+    beta_auth:
+      personaType: provider
+      beta_key: beta_secret_789
+    alpha_auth:
+      key: alpha_secret_999

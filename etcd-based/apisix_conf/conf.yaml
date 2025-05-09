@@ -1,0 +1,25 @@
+# apisix_conf/conf.yaml  (只示範和 Admin API 相關的區段)
+deployment:
+  role: traditional
+  role_traditional:
+    config_provider: etcd
+
+  admin:
+    # ➜ 加上白名單
+    allow_admin:
+      - 0.0.0.0/0          # 開發階段全開；上線請改成特定 CIDR
+
+    # API‑Key
+    admin_key:
+      - name: admin
+        key: 'admin123'
+        role: admin
+
+    # Admin API 監聽埠
+    admin_listen:
+      port: 9190
+
+  # etcd 設定照舊
+  etcd:
+    host:
+      - "http://etcd:2379"

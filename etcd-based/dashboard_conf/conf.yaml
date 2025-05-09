@@ -1,0 +1,31 @@
+conf:
+  listen:
+    # 绑定 IP 地址
+    host: 0.0.0.0
+    # 监听端口
+    port: 9000
+  etcd:
+    # etcd 用户名
+    # username: "root"
+    # etcd 密码
+    # password: "123456"    
+    # etcd 地址，支持集群多节点定义
+    endpoints:
+      - apisix-etcd:2379
+  log:
+    error_log:
+      # 日志级别 debug, info, warn, error, panic, fatal
+      level: warn 
+      # 日志输出路径
+      file_path: logs/error.log
+      
+authentication:
+  secret: secret
+  # jwt token 过期时间（秒)
+  expire_time: 3600     
+  # 登录用户名密码
+  users:
+    - username: admin 
+      password: admin
+    - username: user
+      password: user
