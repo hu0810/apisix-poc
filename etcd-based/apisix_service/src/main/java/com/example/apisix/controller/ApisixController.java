@@ -13,7 +13,7 @@ public class ApisixController {
 
     @PostMapping("/bind")
     public String bindUserToApis(@RequestBody BindRequest req) {
-        routeService.bindUserToApis(req.getUserName(), req.getPersonaType(), req.getApiKey(), req.getApis());
+        routeService.bindUserToApis(req.getUserName(), req.getPersonaType(), req.getApiKey(), req.getApis(), req.getUrl());
         return "OK";
     }
 }
