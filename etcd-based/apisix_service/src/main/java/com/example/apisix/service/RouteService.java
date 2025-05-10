@@ -2,7 +2,7 @@ package com.example.apisix.service;
 
 import com.example.apisix.entity.*;
 import com.example.apisix.repository.*;
-import com.example.apisix.util.TemplateUtil;
+import com.example.apisix.utils.TemplateUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +13,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -24,7 +25,7 @@ public class RouteService {
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public void bindUserToApis(String userName, String personaType, String apiKey, List<String> apis, String url) {
+    public void bindSmart(String userName, String personaType, String apiKey, List<String> apis, Map<String, String> extraParams) {
         for (String apiName : apis) {
             ApiDefinition api = apiRepo.findByName(apiName);
             RouteTemplate tpl = tplRepo.findByCode(api.getRouteTemplateCode());
@@ -33,7 +34,7 @@ public class RouteService {
                 throw new RuntimeException("API or Template not found for: " + apiName);
             }
 
-            // ==== Prepare template context ====
+            // ==== Prepare context ====
             Map<String, Object> context = new HashMap<>();
             context.put("userName", userName);
             context.put("personaType", personaType);
@@ -41,45 +42,50 @@ public class RouteService {
             context.put("uri", api.getUri());
             context.put("name", api.getName());
             context.put("serviceName", api.getServiceName());
-            context.put("url", url);
+            if (extraParams != null) {
+                context.putAll(extraParams);
+            }
 
             String upstreamId = api.getName() + "-upstream";
             context.put("upstream_id", upstreamId);
 
-            // ==== Check and create upstream if needed ====
-            String upstreamCheckUrl = "http://localhost:9180/apisix/admin/upstreams/" + upstreamId;
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-API-KEY", "admin123");
-
-            boolean upstreamExists = true;
-            try {
-                restTemplate.exchange(upstreamCheckUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-            } catch (HttpClientErrorException.NotFound e) {
-                upstreamExists = false;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to check upstream existence", e);
-            }
-
-            if (!upstreamExists) {
+            // If template contains {{url}}, ensure upstream exists
+            if (tpl.getPluginTemplate().contains("{{url}}") || tpl.getRouteTemplate().contains("{{upstream_id}}")) {
                 try {
+                    String url = (String) context.get("url");
+                    if (url == null) {
+                        throw new RuntimeException("Missing required variable: url for API: " + apiName + ", template: " + tpl.getCode());
+                    }
                     URI parsed = new URI(url);
                     String hostPort = parsed.getHost() + ":" + (parsed.getPort() == -1 ? 80 : parsed.getPort());
 
-                    Map<String, Object> upstream = Map.of(
-                        "id", upstreamId,
-                        "type", "roundrobin",
-                        "nodes", Map.of(hostPort, 1)
-                    );
+                    String upstreamCheckUrl = "http://localhost:9180/apisix/admin/upstreams/" + upstreamId;
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.set("X-API-KEY", "admin123");
 
-                    headers.setContentType(MediaType.APPLICATION_JSON);
-                    HttpEntity<String> upstreamEntity = new HttpEntity<>(mapper.writeValueAsString(upstream), headers);
-                    restTemplate.put(upstreamCheckUrl, upstreamEntity);
+                    boolean upstreamExists = true;
+                    try {
+                        restTemplate.exchange(upstreamCheckUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+                    } catch (HttpClientErrorException.NotFound e) {
+                        upstreamExists = false;
+                    }
+
+                    if (!upstreamExists) {
+                        Map<String, Object> upstream = Map.of(
+                            "id", upstreamId,
+                            "type", "roundrobin",
+                            "nodes", Map.of(hostPort, 1)
+                        );
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                        HttpEntity<String> upstreamEntity = new HttpEntity<>(mapper.writeValueAsString(upstream), headers);
+                        restTemplate.put(upstreamCheckUrl, upstreamEntity);
+                    }
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to create upstream: " + upstreamId, e);
+                    throw new RuntimeException("Failed to prepare upstream: " + e.getMessage());
                 }
             }
 
-            // ==== Render vars_template ====
+            // Render vars
             String renderedVars = TemplateUtil.render(tpl.getVarsTemplate(), context);
             Map<String, List<List<String>>> varsMap;
             try {
@@ -93,8 +99,10 @@ public class RouteService {
                 throw new RuntimeException("No vars_template found for personaType: " + personaType);
             }
 
-            // ==== Render plugin_template ====
+            // Render plugin
             String pluginJson = TemplateUtil.render(tpl.getPluginTemplate(), context);
+            System.out.println("Rendered pluginJson: " + pluginJson); // ✅ 加這行
+
             Map<String, Object> plugins;
             try {
                 plugins = mapper.readValue(pluginJson, Map.class);
@@ -102,7 +110,7 @@ public class RouteService {
                 throw new RuntimeException("Failed to parse plugin_template JSON", e);
             }
 
-            // ==== Render route_template ====
+            // Render route
             String routeJson = TemplateUtil.render(tpl.getRouteTemplate(), context);
             Map<String, Object> route;
             try {
@@ -111,23 +119,27 @@ public class RouteService {
                 throw new RuntimeException("Failed to parse route_template JSON", e);
             }
 
-            // ==== Assemble route ====
+            // Finalize and push route
             String routeId = "route_" + api.getName() + "_" + userName;
             route.put("id", routeId);
             route.put("plugins", plugins);
             route.put("vars", vars);
 
-            // ==== Push route to APISIX ====
             try {
+                HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("X-API-KEY", "admin123");
                 HttpEntity<String> routeEntity = new HttpEntity<>(mapper.writeValueAsString(route), headers);
                 restTemplate.put("http://localhost:9180/apisix/admin/routes/" + routeId, routeEntity);
             } catch (Exception e) {
-                throw new RuntimeException("Failed to push route to APISIX", e);
+                throw new RuntimeException(e.getMessage(), e);
             }
 
-            // ==== Record API binding ====
-            ApiBinding record = new ApiBinding();
+            // Record binding
+            ApiBinding record = apiBindingRepo
+                .findByUserNameAndPersonaTypeAndApiName(userName, personaType, api.getName())
+                .orElse(new ApiBinding());
+
             record.setUserName(userName);
             record.setPersonaType(personaType);
             record.setApiName(api.getName());
@@ -135,8 +147,9 @@ public class RouteService {
                 record.setBoundVars(mapper.writeValueAsString(vars));
                 record.setTemplateContext(mapper.writeValueAsString(context));
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize binding context", e);
+                throw new RuntimeException("Failed to serialize binding record", e);
             }
+            record.setBoundAt(LocalDateTime.now());
 
             apiBindingRepo.save(record);
         }
