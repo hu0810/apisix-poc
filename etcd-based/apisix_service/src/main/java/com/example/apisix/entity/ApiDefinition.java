@@ -13,4 +13,5 @@ public class ApiDefinition {
     private String uri;
     private String serviceName;
     private String routeTemplateCode;
+    private String upstreamTemplateCode;
 }
