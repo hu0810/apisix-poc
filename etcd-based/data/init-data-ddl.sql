@@ -1,31 +1,33 @@
--- 1. 定義 API 基本資訊
-CREATE TABLE api_definitions (
+CREATE DATABASE IF NOT EXISTS apisix;
+USE apisix;
+
+-- 1. Route 模板：共用一筆，可根據 context 渲染 route/plugin/vars
+CREATE TABLE IF NOT EXISTS route_templates (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(64) NOT NULL,          -- apiA, apiB...
-    uri VARCHAR(255) NOT NULL,          -- 如: /apiA
-    service_name VARCHAR(64) NOT NULL   -- 可對應 upstream
+    code VARCHAR(64) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    route_template TEXT NOT NULL,      -- 含 uri, methods, upstream_id
+    plugin_template TEXT NOT NULL,     -- 含 dynamic-upstream 的配置
+    vars_template TEXT NOT NULL        -- JSON object: personaType -> List of conditions
 );
 
--- 2. API 需要掛的 Plugin 與對應的變數模板
-CREATE TABLE api_plugin_bindings (
+-- 2. API 定義：每筆 API 使用一筆模板
+CREATE TABLE IF NOT EXISTS api_definitions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    api_id INT NOT NULL,
-    plugin_name VARCHAR(64) NOT NULL,            -- 如: custom-auth
-    config_template TEXT NOT NULL,               -- 如: {"persona_type": "{{personaType}}"}
-    FOREIGN KEY (api_id) REFERENCES api_definitions(id)
+    name VARCHAR(64) NOT NULL UNIQUE,             -- 如 getUserInfo
+    uri VARCHAR(255) NOT NULL,             -- 如 /user/info
+    service_name VARCHAR(64) NOT NULL,     -- 如 user-service
+    route_template_code VARCHAR(64) NOT NULL,
+    FOREIGN KEY (route_template_code) REFERENCES route_templates(code)
 );
 
--- 3. 每個 plugin 需要的變數（用於驗證前端是否給足資料）
-CREATE TABLE plugin_variable_defs (
+-- 3. API 綁定記錄：記錄用戶申請過哪些 API 與當下 context + vars（執行紀錄）
+CREATE TABLE IF NOT EXISTS api_bindings (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    plugin_name VARCHAR(64) NOT NULL,
-    variable_name VARCHAR(64) NOT NULL,
-    required BOOLEAN DEFAULT TRUE
-);
-
--- 4. 模擬 upstream 配置模板
-CREATE TABLE api_upstream_templates (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    service_name VARCHAR(64) NOT NULL,  -- 對應 api_definitions.service_name
-    upstream_json TEXT NOT NULL         -- JSON 格式 upstream 結構
+    user_name VARCHAR(64) NOT NULL,
+    persona_type VARCHAR(64) NOT NULL,
+    api_name VARCHAR(64) NOT NULL,
+    bound_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    bound_vars TEXT NOT NULL,              -- 渲染後的 vars
+    template_context TEXT NOT NULL         -- context: userName, personaType, url, upstream_id...
 );

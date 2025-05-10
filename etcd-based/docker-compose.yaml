@@ -1,6 +1,19 @@
 version: "3"
 
 services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: apisix
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
   etcd:
     container_name: etcd
     image: bitnami/etcd:3.5.17
@@ -23,19 +36,34 @@ services:
 
   apisix:
     container_name: apisix
-    image: apache/apisix:${APISIX_IMAGE_TAG:-3.11.0-debian}
+    image: apache/apisix:3.10.0-debian
     volumes:
       - ./apisix_conf/conf.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./plugins/custom-auth.lua:/usr/local/apisix/apisix/plugins/custom-auth.lua:ro
+      - ./plugins/dynamic-upstream.lua:/usr/local/apisix/apisix/plugins/dynamic-upstream.lua:ro
+
     restart: always
     depends_on:
       etcd:
         condition: service_healthy
     ports:
-      - "9190:9190/tcp"
+      - "9180:9180/tcp"
       - "9080:9080/tcp"
       - "9091:9091/tcp"
       - "9443:9443/tcp"
       - "9092:9092/tcp"
+    networks:
+      apisix:
+
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.0-alpine
+    container_name: apisix-dashboard
+    ports:
+      - "9000:9000"  # dashboard 預設 port
+    volumes:
+      - ./dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
+    depends_on:
+      - etcd
     networks:
       apisix:
 

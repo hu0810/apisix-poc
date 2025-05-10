@@ -1,0 +1,36 @@
+apisix:
+  node_listen: 9080
+  enable_admin: false
+  config_center: yaml
+  ssl:
+    enable: false
+
+plugin_attr:
+  prometheus:
+    export_addr:
+      ip: "0.0.0.0"
+      port: 9091
+
+deployment:
+  role: data_plane
+  role_data_plane:
+    config_provider: yaml
+
+plugins:
+  - key-auth
+  - limit-count
+  - prometheus
+  - custom-auth
+
+plugin_attr:
+  custom-auth:
+    priority: 1000
+
+nginx_config:
+  error_log: logs/error.log
+  worker_processes: 1
+
+  http:
+    access_log: logs/access.log
+    access_log_format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent"
+    keepalive_timeout: 60

@@ -1,49 +1,5 @@
 routes:
 - uri: /ai/summarize
-  name: frank-limitCountTest
-  methods:
-  - GET
-  upstream_id: limitCountTest-upstream
-  id: route_limitCountTest_frank
-  plugins:
-    custom-auth:
-      persona_type: provider
-      user: frank
-    limit-count:
-      count: 5
-      time_window: 60
-      key: remote_addr
-      policy: local
-  vars:
-  - - http_personaType
-    - ==
-    - provider
-  - - http_providerKey
-    - ==
-    - frank
-- uri: /ai/summarize
-  name: frank-limitCountTest
-  methods:
-  - GET
-  upstream_id: limitCountTest-upstream
-  id: route_limitCountTest_frank
-  plugins:
-    custom-auth:
-      persona_type: provider
-      user: frank
-    limit-count:
-      count: 5
-      time_window: 60
-      key: remote_addr
-      policy: local
-  vars:
-  - - http_personaType
-    - ==
-    - provider
-  - - http_providerKey
-    - ==
-    - frank
-- uri: /ai/summarize
   name: franknolimit-limitCountTest
   methods:
   - GET
@@ -60,3 +16,25 @@ routes:
   - - http_providerKey
     - ==
     - franknolimit
+- uri: /ai/summarize
+  name: franklimit-limitCountTest
+  methods:
+  - GET
+  upstream_id: limitCountTest-upstream
+  id: route_limitCountTest_franklimit
+  plugins:
+    custom-auth:
+      persona_type: provider
+      user: franklimit
+  vars:
+  - - http_personaType
+    - ==
+    - provider
+  - - http_providerKey
+    - ==
+    - franklimit
+upstreams:
+- id: limitCountTest-upstream
+  type: roundrobin
+  nodes:
+    your-upstream.com:9000: 1

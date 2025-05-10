@@ -1,4 +1,12 @@
 # apisix_conf/conf.yaml  (只示範和 Admin API 相關的區段)
+plugins:
+  - example-plugin
+  - jwt-auth
+  - custom-auth   # ← 你要用的 plugin 要出現在這裡
+  - proxy-rewrite
+  - dynamic-upstream
+  - limit-count
+
 deployment:
   role: traditional
   role_traditional:
@@ -17,9 +25,11 @@ deployment:
 
     # Admin API 監聽埠
     admin_listen:
-      port: 9190
+      port: 9180
 
   # etcd 設定照舊
   etcd:
     host:
       - "http://etcd:2379"
+
+
