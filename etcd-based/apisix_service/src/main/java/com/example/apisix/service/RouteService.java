@@ -7,29 +7,27 @@ import com.example.apisix.utils.TemplateValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RouteService {
     private final ApiRepository apiRepo;
     private final TemplateRepository tplRepo;
     private final UpstreamTemplateRepository upstreamTplRepo;
     private final ApiBindingRepository apiBindingRepo;
     private final RestTemplate restTemplate;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
 
     public void bindSmart(String userName, String personaType, String apiKey, List<String> apis, Map<String, Object> extraParams) {
         for (String apiName : apis) {
-            
             ApiDefinition api = apiRepo.findByName(apiName);
             RouteTemplate tpl = tplRepo.findByCode(api.getRouteTemplateCode());
             UpstreamTemplate upstreamTpl = upstreamTplRepo.findByCode(api.getUpstreamTemplateCode());
@@ -38,7 +36,6 @@ public class RouteService {
                 throw new RuntimeException("API or Template not found for: " + apiName);
             }
 
-            // ==== Prepare context ====
             Map<String, Object> context = new HashMap<>();
             context.put("userName", userName);
             context.put("personaType", personaType);
@@ -51,11 +48,9 @@ public class RouteService {
                 Object rawNodes = extraParams.get("nodes");
                 if (rawNodes instanceof List && !((List<?>) rawNodes).isEmpty()) {
                     context.put("nodes", rawNodes);
-                } 
+                }
             }
 
-
-            // 變數填寫檢查（支援條件分析）
             Map<String, String> allTemplates = Map.of(
                 "route_template", tpl.getRouteTemplate(),
                 "plugin_template", tpl.getPluginTemplate(),
@@ -63,10 +58,8 @@ public class RouteService {
                 "upstream_template", upstreamTpl.getUpstreamTemplate()
             );
             TemplateValidator.validateAllTemplates(allTemplates, context);
-
-            // 如果有使用 nodes，就要檢查 nodes 結構正確性
             TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), context);
-            // ==== Render and ensure upstream exists ====
+
             String renderedUpstreamStr = TemplateUtil.render(upstreamTpl.getUpstreamTemplate(), context);
             Map<String, Object> desiredUpstream;
             try {
@@ -104,16 +97,14 @@ public class RouteService {
 
             if (needsCreate) {
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<String> upstreamEntity;
                 try {
-                    upstreamEntity = new HttpEntity<>(mapper.writeValueAsString(desiredUpstream), headers);
+                    HttpEntity<String> upstreamEntity = new HttpEntity<>(mapper.writeValueAsString(desiredUpstream), headers);
+                    restTemplate.put(upstreamCheckUrl, upstreamEntity);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException("Failed to serialize upstream", e);
                 }
-                restTemplate.put(upstreamCheckUrl, upstreamEntity);
             }
 
-            // ==== Render vars ====
             String renderedVars = TemplateUtil.render(tpl.getVarsTemplate(), context);
             Map<String, List<List<String>>> varsMap;
             try {
@@ -127,16 +118,20 @@ public class RouteService {
                 throw new RuntimeException("No vars_template found for personaType: " + personaType);
             }
 
-            // ==== Render plugins ====
-            String pluginJson = TemplateUtil.render(tpl.getPluginTemplate(), context);
+            // Java side 檢查 plugin 渲染結果中是否含警告
+
             Map<String, Object> plugins;
             try {
+                String pluginJson = TemplateUtil.render(tpl.getPluginTemplate(), context);
                 plugins = mapper.readValue(pluginJson, new TypeReference<>() {});
+
+                if (plugins.containsKey("__template_warning__")) {
+                    throw new IllegalArgumentException((String) plugins.get("__template_warning__"));
+                }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to parse plugin_template JSON", e);
             }
 
-            // ==== Render route ====
             String routeJson = TemplateUtil.render(tpl.getRouteTemplate(), context);
             Map<String, Object> route;
             try {
@@ -145,7 +140,7 @@ public class RouteService {
                 throw new RuntimeException("Failed to parse route_template JSON", e);
             }
 
-            String routeId = "route_" + api.getName() + "_" + userName;
+            String routeId = "autogen_" + api.getName() + "_" + userName;
             route.put("id", routeId);
             route.put("plugins", plugins);
             route.put("vars", vars);
@@ -158,14 +153,13 @@ public class RouteService {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            // ==== Save API binding ====
             ApiBinding record = apiBindingRepo
-                .findByUserNameAndPersonaTypeAndApiName(userName, personaType, api.getName())
+                .findByUserNameAndPersonaTypeAndApiId(userName, personaType, api.getId())
                 .orElse(new ApiBinding());
 
             record.setUserName(userName);
             record.setPersonaType(personaType);
-            record.setApiName(api.getName());
+            record.setApiId(api.getId());
             record.setBoundAt(LocalDateTime.now());
             try {
                 record.setBoundVars(mapper.writeValueAsString(vars));

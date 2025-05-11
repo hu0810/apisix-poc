@@ -15,7 +15,6 @@ public class ApiBinding {
 
     private String userName;
     private String personaType;
-    private String apiName;
 
     @Column(columnDefinition = "TEXT")
     private String boundVars;
@@ -24,4 +23,7 @@ public class ApiBinding {
     private String templateContext;
 
     private LocalDateTime boundAt = LocalDateTime.now();
+
+    @Column(name = "api_id")
+    private Long apiId;
 }

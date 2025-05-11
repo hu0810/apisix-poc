@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ApiBindingRepository extends JpaRepository<ApiBinding, Long> {
-    Optional<ApiBinding> findByUserNameAndPersonaTypeAndApiName(String userName, String personaType, String apiName);
+    Optional<ApiBinding> findByUserNameAndPersonaTypeAndApiId(String userName, String personaType, Long apiId);
 }
