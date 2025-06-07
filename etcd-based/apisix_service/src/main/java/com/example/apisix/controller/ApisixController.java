@@ -1,6 +1,6 @@
 package com.example.apisix.controller;
 
-import com.example.apisix.dto.BindRequest;
+import com.example.apisix.dto.SubscribeRequest;
 import com.example.apisix.service.RouteService;
 // import com.example.apisix.service.StandaloneExporter;
 import lombok.AllArgsConstructor;
@@ -15,11 +15,11 @@ import org.springframework.http.ResponseEntity;
 public class ApisixController {
     private final RouteService routeService;
 
-    @PostMapping("/bind")
-    public ResponseEntity<?> bind(@RequestBody BindRequest req) {
+    @PostMapping("/subscribe")
+    public ResponseEntity<?> subscribe(@RequestBody SubscribeRequest req) {
     
         try {
-            routeService.bindSmart(
+            routeService.subscribeSmart(
                 req.getUserName(),
                 req.getPersonaType(),
                 req.getApiKey(),

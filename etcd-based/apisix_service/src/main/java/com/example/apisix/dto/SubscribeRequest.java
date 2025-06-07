@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class BindRequest {
+public class SubscribeRequest {
     private String userName;
     private String personaType;
     private String apiKey;

@@ -5,12 +5,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.example</groupId>
-  <artifactId>apisix-route-binding</artifactId>
+  <artifactId>apisix-route-subscription</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>Apisix Route Binding</name>
-  <description>Spring Boot service for APISIX dynamic route binding</description>
+  <name>Apisix Route Subscription</name>
+  <description>Spring Boot service for APISIX dynamic route subscription</description>
 
   <properties>
     <java.version>17</java.version>

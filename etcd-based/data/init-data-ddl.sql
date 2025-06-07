@@ -35,16 +35,16 @@ CREATE TABLE IF NOT EXISTS api_definitions (
     FOREIGN KEY (upstream_template_code) REFERENCES upstream_templates(code) ON DELETE RESTRICT
 );
 
--- 4. API 綁定記錄表：記錄使用者申請的 API 與綁定變數與 context
-CREATE TABLE IF NOT EXISTS api_bindings (
+-- 4. API 訂閱記錄表：記錄使用者申請的 API 與訂閱變數與 context
+CREATE TABLE IF NOT EXISTS api_subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_name VARCHAR(64) NOT NULL,              -- 使用者帳號
     persona_type VARCHAR(64) NOT NULL,           -- 如 tenant, provider
     api_id INT NOT NULL,                         -- 對應 api_definitions.id
     route_id VARCHAR(255) NOT NULL,              -- 生成的 APISIX route id
     upstream_id VARCHAR(255) NOT NULL,           -- 生成的 APISIX upstream id
-    bound_vars JSON NOT NULL,                    -- 渲染後的 vars 結構
+    subscribed_vars JSON NOT NULL,               -- 渲染後的 vars 結構
     template_context JSON NOT NULL,              -- 渲染用變數，如 userName、uri、upstream_id 等
-    bound_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (api_id) REFERENCES api_definitions(id) ON DELETE CASCADE
 );
