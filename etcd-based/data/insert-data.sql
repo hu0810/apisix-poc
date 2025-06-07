@@ -71,6 +71,50 @@ INSERT INTO route_templates (
     ]
  }');
 
+-- model-upstream-router
+('model-upstream-router',
+ '根據 model header 決定 upstream，並注入對應的 key',
+ '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route", "upstream_id": "dummy-upstream"}',
+ '{
+    "multiple-upstream-plugin": {
+      "rules": [
+        {
+          "name": "GPT-4o",
+          "match": [
+            ["http_model", "contains", "gpt-4o"]
+          ],
+          "upstream_id": "upstream-gpt4o",
+          "inject_headers": {
+            "x-api-key": "gpt4o-key-abc"
+          }
+        },
+        {
+          "name": "GPT-3.5",
+          "match": [
+            ["http_model", "contains", "gpt3.5"]
+          ],
+          "upstream_id": "upstream-gpt35",
+          "inject_headers": {
+            "x-api-key": "gpt35-key-xyz"
+          }
+        }
+      ]
+    }
+ }',
+ '{
+    "tenant": [
+        ["http_type", "==", "tenant"],
+        ["http_appname", "==", "{{userName}}"]
+    ],
+    "provider": [
+        ["http_type", "==", "provider"],
+        ["http_key", "==", "{{userName}}"]
+    ],
+    "alpha": [
+        ["http_alpha_appname", "==", "{{userName}}"]
+    ]
+ }'),
+
 
 -- 插入 upstream_templates（保持不變）
 INSERT INTO upstream_templates (code, description, upstream_template) VALUES
@@ -123,6 +167,28 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
     "nodes": {{nodes_json}}
 }');
 
+('dummy-upstream',
+ '占位 upstream',
+ '{
+    "id": "dummy-upstream",
+    "type": "roundrobin",
+    "nodes": [ { "host": "127.0.0.1", "port": 80, "weight": 1 } ]
+}'),
+('upstream-gpt4o',
+ 'GPT-4o upstream',
+ '{
+    "id": "upstream-gpt4o",
+    "type": "roundrobin",
+    "nodes": [ { "host": "gpt4o.example.com", "port": 80, "weight": 1 } ]
+}'),
+('upstream-gpt35',
+ 'GPT-3.5 upstream',
+ '{
+    "id": "upstream-gpt35",
+    "type": "roundrobin",
+    "nodes": [ { "host": "gpt35.example.com", "port": 80, "weight": 1 } ]
+}');
+
 -- 插入 api_definitions（保持不變）
 INSERT INTO api_definitions (
     name, uri, service_name, route_template_code, upstream_template_code
@@ -131,4 +197,5 @@ INSERT INTO api_definitions (
 ('generateImage', '/ai/image', 'ai-service', 'persona-basic', 'common-upstream'),
 ('generateImageDynamic', '/ai/image', 'ai-service', 'ai-dynamic', 'openai-upstream'),
 ('summarizeText', '/ai/summarize', 'ai-service', 'ai-dynamic', 'openai-upstream'),
-('limitCountTest', '/ai/summarize', 'ai-service', 'auth-limit', 'openai-upstream');
+('limitCountTest', '/ai/summarize', 'ai-service', 'auth-limit', 'openai-upstream'),
+('modelInference', '/inference', 'ai-service', 'model-upstream-router', 'dummy-upstream');

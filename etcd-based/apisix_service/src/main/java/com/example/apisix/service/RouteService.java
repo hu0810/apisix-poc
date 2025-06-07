@@ -101,8 +101,32 @@ public class RouteService {
             context.put("upstream_id", upstreamIdFromTpl);
             upstreamManager.ensureUpstream(desiredUpstream);
 
+            List<String> upstreamIds = new ArrayList<>();
+            upstreamIds.add(upstreamIdFromTpl);
+
             List<List<String>> vars = templateRenderer.renderVars(tpl.getVarsTemplate(), personaType, context);
             Map<String, Object> plugins = templateRenderer.renderPlugins(tpl.getPluginTemplate(), context);
+
+            if (plugins.containsKey("multiple-upstream-plugin")) {
+                Object rulesObj = ((Map<String, Object>) plugins.get("multiple-upstream-plugin")).get("rules");
+                if (rulesObj instanceof List<?>) {
+                    for (Object r : (List<?>) rulesObj) {
+                        if (r instanceof Map) {
+                            String uid = (String) ((Map<?, ?>) r).get("upstream_id");
+                            if (uid != null) {
+                                UpstreamTemplate extraTpl = upstreamTplRepo.findByCode(uid);
+                                if (extraTpl != null) {
+                                    Map<String, Object> up = templateRenderer.renderUpstream(extraTpl.getUpstreamTemplate(), context);
+                                    up.put("id", uid);
+                                    upstreamManager.ensureUpstream(up);
+                                }
+                                upstreamIds.add(uid);
+                            }
+                        }
+                    }
+                }
+            }
+
             Map<String, Object> route = templateRenderer.renderRoute(tpl.getRouteTemplate(), context);
 
             String routeId = "autogen_" + api.getName() + "_" + userName;
@@ -118,7 +142,11 @@ public class RouteService {
             record.setUserName(userName);
             record.setPersonaType(personaType);
             record.setRouteId(routeId);
-            record.setUpstreamId(upstreamIdFromTpl);
+            try {
+                record.setUpstreamIds(mapper.writeValueAsString(upstreamIds));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize upstreamIds", e);
+            }
             record.setApiId(api.getId());
             record.setSubscribedAt(LocalDateTime.now());
             try {
