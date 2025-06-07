@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS api_bindings (
     user_name VARCHAR(64) NOT NULL,              -- 使用者帳號
     persona_type VARCHAR(64) NOT NULL,           -- 如 tenant, provider
     api_id INT NOT NULL,                         -- 對應 api_definitions.id
+    route_id VARCHAR(255) NOT NULL,              -- 生成的 APISIX route id
+    upstream_id VARCHAR(255) NOT NULL,           -- 生成的 APISIX upstream id
     bound_vars JSON NOT NULL,                    -- 渲染後的 vars 結構
     template_context JSON NOT NULL,              -- 渲染用變數，如 userName、uri、upstream_id 等
     bound_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
