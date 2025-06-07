@@ -73,10 +73,16 @@ public class RouteService {
                 throw new RuntimeException("Failed to parse rendered upstream_template JSON", e);
             }
 
-            String upstreamIdFromTpl = (String) desiredUpstream.get("id");
-            if (upstreamIdFromTpl == null) {
-                throw new RuntimeException("Missing upstream id in rendered template.");
+            // Generate unique upstream id based on the upstream content
+            String upstreamHash;
+            try {
+                upstreamHash = TemplateUtil.shortHash(mapper.writeValueAsString(desiredUpstream));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to hash upstream", e);
             }
+            String upstreamIdFromTpl = "u-" + upstreamHash;
+            desiredUpstream.put("id", upstreamIdFromTpl);
+            context.put("upstream_id", upstreamIdFromTpl);
 
             String upstreamCheckUrl = "http://localhost:9180/apisix/admin/upstreams/" + upstreamIdFromTpl;
             HttpHeaders headers = new HttpHeaders();

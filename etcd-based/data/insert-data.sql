@@ -36,7 +36,7 @@ INSERT INTO route_templates (
         "persona_type": "{{personaType}}",
         "user": "{{userName}}",
         "url": "{{url}}",
-        "upstream_id": "{{userName}}-openai-upstream"
+        "upstream_id": "{{upstream_id}}"
     }
  }',
  '{
@@ -114,7 +114,7 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
 ('openai-upstream',
  'OpenAI 專用 Upstream，帶有使用者動態 ID',
  '{
-    "id": "{{userName}}-openai-upstream",
+    "id": "{{upstream_id}}",
     "type": "roundrobin",
     "scheme": "http",
     "pass_host": "rewrite",
