@@ -72,6 +72,9 @@ INSERT INTO route_templates (
  }');
 
 -- model-upstream-router
+INSERT INTO route_templates (
+    code, description, route_template, plugin_template, vars_template
+) VALUES
 ('model-upstream-router',
  '根據 model header 決定 upstream，並注入對應的 key',
  '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route", "upstream_id": "dummy-upstream"}',
@@ -113,7 +116,7 @@ INSERT INTO route_templates (
     "alpha": [
         ["http_alpha_appname", "==", "{{userName}}"]
     ]
- }'),
+ }');
 
 
 -- 插入 upstream_templates（保持不變）
