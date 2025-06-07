@@ -102,10 +102,10 @@ public class TemplateValidator {
     }
 
     /**
-     * 根據 upstream template 是否包含 {{ node.xxx }} 來決定是否驗證 nodes 結構
+     * 根據 upstream template 是否需要 nodes 參數來決定是否驗證 nodes 結構
      */
     public static void validateIfNodeTemplateUsed(String upstreamTemplate, Map<String, Object> context) {
-        if (upstreamTemplate.contains("{{ node.")) {
+        if (upstreamTemplate.contains("{{ node.") || upstreamTemplate.contains("{{nodes_json}}")) {
             validateNodesStructure(context);
         }
     }

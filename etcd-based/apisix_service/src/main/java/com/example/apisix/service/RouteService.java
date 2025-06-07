@@ -48,13 +48,38 @@ public class RouteService {
             context.put("uri", api.getUri());
             context.put("name", api.getName());
             context.put("serviceName", api.getServiceName());
+
+            String limitCountPlugin = "";
             if (extraParams != null) {
                 context.putAll(extraParams);
+
                 Object rawNodes = extraParams.get("nodes");
                 if (rawNodes instanceof List && !((List<?>) rawNodes).isEmpty()) {
                     context.put("nodes", rawNodes);
+                    try {
+                        context.put("nodes_json", mapper.writeValueAsString(rawNodes));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Failed to serialize nodes", e);
+                    }
+                }
+
+                Object countObj = extraParams.get("count");
+                Object timeWindowObj = extraParams.get("time_window");
+                if (countObj != null || timeWindowObj != null) {
+                    if (countObj != null && timeWindowObj != null) {
+                        limitCountPlugin = ", \"limit-count\": {" +
+                                "\"count\": " + countObj + "," +
+                                "\"time_window\": " + timeWindowObj + "," +
+                                "\"key\": \"remote_addr\"," +
+                                "\"policy\": \"local\"}";
+                    } else {
+                        throw new IllegalArgumentException(
+                                "limit-count plugin requires both count and time_window to be set.");
+                    }
                 }
             }
+
+            context.put("limit_count_plugin", limitCountPlugin);
 
             Map<String, String> allTemplates = Map.of(
                 "route_template", tpl.getRouteTemplate(),
