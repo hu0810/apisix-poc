@@ -10,18 +10,25 @@ import java.util.Map;
 
 @Component
 public class RouteManager {
+    private static final String DEFAULT_ADMIN_URL = "http://localhost:9180/apisix/admin";
+    private static final String DEFAULT_ADMIN_KEY = "admin123";
+
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
+    private final String adminUrl;
+    private final String adminKey;
 
     public RouteManager(RestTemplate restTemplate, ObjectMapper mapper) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
+        this.adminUrl = System.getenv().getOrDefault("APISIX_ADMIN_URL", DEFAULT_ADMIN_URL);
+        this.adminKey = System.getenv().getOrDefault("APISIX_ADMIN_API_KEY", DEFAULT_ADMIN_KEY);
     }
 
     public void createOrUpdateRoute(String routeId, Map<String, Object> route) {
-        String url = "http://localhost:9180/apisix/admin/routes/" + routeId;
+        String url = adminUrl + "/routes/" + routeId;
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-API-KEY", "admin123");
+        headers.set("X-API-KEY", adminKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
         try {
             HttpEntity<String> entity = new HttpEntity<>(mapper.writeValueAsString(route), headers);
