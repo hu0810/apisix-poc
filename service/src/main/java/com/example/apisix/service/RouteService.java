@@ -117,10 +117,18 @@ public class RouteService {
     }
 
     private String createUpstream(UpstreamTemplate upstreamTpl, Map<String, Object> context) {
-        Map<String, Object> desiredUpstream = templateRenderer.renderUpstream(upstreamTpl.getUpstreamTemplate(), context);
-        String upstreamIdFromTpl = IdUtil.generateId("u-", desiredUpstream, mapper);
+        Map<String, Object> desiredUpstream =
+            templateRenderer.renderUpstream(upstreamTpl.getUpstreamTemplate(), context);
+
+        Object idObj = desiredUpstream.get("id");
+        String upstreamIdFromTpl =
+            (idObj instanceof String && !((String) idObj).isBlank())
+                ? (String) idObj
+                : IdUtil.generateId("u-", desiredUpstream, mapper);
+
         desiredUpstream.put("id", upstreamIdFromTpl);
         context.put("upstream_id", upstreamIdFromTpl);
+
         upstreamManager.ensureUpstream(desiredUpstream);
         return upstreamIdFromTpl;
     }

@@ -54,7 +54,14 @@ print_case "Valid limit-count parameters" '{
   "personaType": "provider",
   "apiKey": "carol-key",
   "apis": ["limitCountTest"],
-  "extraParams": { "count": 10, "time_window": 60 }
+  "extraParams": {
+    "count": 10,
+    "time_window": 60,
+    "upstream_host": "openai.example.com",
+    "nodes": [
+      { "host": "openai.example.com", "port": 80, "weight": 1 }
+    ]
+  }
 }'
 
 print_case "Multiple upstream router" '{
