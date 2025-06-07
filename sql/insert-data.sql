@@ -77,7 +77,7 @@ INSERT INTO route_templates (
 ) VALUES
 ('model-upstream-router',
  '根據 model header 決定 upstream，並注入對應的 key',
- '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route", "upstream_id": "dummy-upstream"}',
+ '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route", "upstream_id": "{{upstream_id}}"}',
  '{
     "multiple-upstream-plugin": {
       "rules": []
@@ -103,7 +103,7 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
 ('common-upstream',
  '通用 Upstream 設定，固定 timeout、keepalive_pool、hash_on、nodes',
  '{
-    "id": "common-upstream",
+    "id": "{{upstream_id}}",
     "type": "roundrobin",
     "scheme": "http",
     "pass_host": "rewrite",
@@ -153,21 +153,21 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
 ('dummy-upstream',
  '占位 upstream',
  '{
-    "id": "dummy-upstream",
+    "id": "{{upstream_id}}",
     "type": "roundrobin",
     "nodes": [ { "host": "127.0.0.1", "port": 80, "weight": 1 } ]
 }'),
 ('upstream-gpt4o',
  'GPT-4o upstream',
  '{
-    "id": "upstream-gpt4o",
+    "id": "{{upstream_id}}",
     "type": "roundrobin",
     "nodes": [ { "host": "gpt4o.example.com", "port": 80, "weight": 1 } ]
 }'),
 ('upstream-gpt35',
  'GPT-3.5 upstream',
  '{
-    "id": "upstream-gpt35",
+    "id": "{{upstream_id}}",
     "type": "roundrobin",
     "nodes": [ { "host": "gpt35.example.com", "port": 80, "weight": 1 } ]
 }');
@@ -181,4 +181,4 @@ INSERT INTO api_definitions (
 ('generateImageDynamic', '/ai/image', 'ai-service', 'ai-dynamic', 'openai-upstream'),
 ('summarizeText', '/ai/summarize', 'ai-service', 'ai-dynamic', 'openai-upstream'),
 ('limitCountTest', '/ai/summarize', 'ai-service', 'auth-limit', 'openai-upstream'),
-('modelInference', '/inference', 'ai-service', 'model-upstream-router', 'dummy-upstream');
+('modelInference', '/inference', 'ai-service', 'model-upstream-router', 'openai-upstream');
