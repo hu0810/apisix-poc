@@ -67,6 +67,14 @@ It includes custom plugins, a Spring Boot service for dynamic route subscription
    Each case prints the response and HTTP status code so you can verify success
    or failure.  Examples cover rate limiting and multi-upstream routing.
 
+6. **Reset the environment**
+   When you need a clean etcd and database state, run:
+   ```bash
+   bash scripts/reset-compose.sh
+   ```
+   The script removes the existing volumes and `etcd_data` directory then
+   starts the stack again.
+
 ## What can this project do?
 
 - Demonstrates how to configure and extend APISIX with custom plugins.
