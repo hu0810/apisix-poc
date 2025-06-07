@@ -123,10 +123,28 @@ public class RouteService {
         TemplateValidator.validateTemplateVariables(
                 tpl.getVarsTemplate(), context,
                 "vars_template");
-        TemplateValidator.validateTemplateVariables(
-                upstreamTpl.getUpstreamTemplate(), context,
-                "upstream_template", Set.of("upstream_id"));
-        TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), context);
+        Object mu = context.get("multi_upstreams");
+        boolean useMulti = mu instanceof List && !((List<?>) mu).isEmpty();
+
+        if (!useMulti) {
+            TemplateValidator.validateTemplateVariables(
+                    upstreamTpl.getUpstreamTemplate(), context,
+                    "upstream_template", Set.of("upstream_id"));
+            TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), context);
+        } else {
+            for (Object obj : (List<?>) mu) {
+                if (!(obj instanceof Map)) {
+                    continue;
+                }
+                @SuppressWarnings("unchecked")
+                Map<String, Object> itemCtx = new java.util.HashMap<>(context);
+                itemCtx.putAll((Map<String, Object>) obj);
+                TemplateValidator.validateTemplateVariables(
+                        upstreamTpl.getUpstreamTemplate(), itemCtx,
+                        "upstream_template", Set.of("upstream_id"));
+                TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), itemCtx);
+            }
+        }
     }
 
     private String createUpstream(UpstreamTemplate upstreamTpl, Map<String, Object> context) {
@@ -171,6 +189,15 @@ public class RouteService {
 
                 Map<String, Object> ruleContext = new HashMap<>(context);
                 ruleContext.putAll(item);
+
+                Object itemNodes = ruleContext.get("nodes");
+                if (itemNodes instanceof List<?> list && !list.isEmpty()) {
+                    try {
+                        ruleContext.put("nodes_json", mapper.writeValueAsString(itemNodes));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Failed to serialize nodes", e);
+                    }
+                }
 
                 Map<String, Object> up = templateRenderer.renderUpstream(baseUpstreamTpl.getUpstreamTemplate(), ruleContext);
                 String dynamicUid = IdUtil.generateId("u-", up, mapper);
