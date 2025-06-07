@@ -8,9 +8,10 @@ set -euo pipefail
 docker-compose down -v
 
 # Clear etcd data (host directory mounted into etcd container)
-rm -rf ./etcd_data
-mkdir -p ./etcd_data
-chmod 755 ./etcd_data
+sudo rm -rf ./etcd_data
+mkdir ./etcd_data
+sudo chown -R $USER:$USER ./etcd_data
+chmod -R 777 ./etcd_data
 
 # Start stack again
 docker-compose up -d
