@@ -36,7 +36,7 @@ public class RouteManager {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize route", e);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new RuntimeException("Failed to call APISIX Admin API", e);
         }
     }
 }

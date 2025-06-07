@@ -13,3 +13,4 @@ done
 # mkdir ./etcd_data
 # sudo chown -R $USER:$USER ./etcd_data
 # chmod -R 777 ./etcd_data
+
