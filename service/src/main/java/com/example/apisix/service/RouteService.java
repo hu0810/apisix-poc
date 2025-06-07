@@ -48,7 +48,7 @@ public class RouteService {
             List<List<String>> vars = templateRenderer.renderVars(tpl.getVarsTemplate(), personaType, context);
             Map<String, Object> plugins = templateRenderer.renderPlugins(tpl.getPluginTemplate(), context);
 
-            processMultipleUpstreamPlugin(plugins, context, upstreamIds);
+            processMultipleUpstreamPlugin(plugins, context, upstreamIds, upstreamTpl);
 
             Map<String, Object> route = buildRoute(tpl, plugins, vars, context);
             String routeId = (String) route.get("id");
@@ -126,33 +126,84 @@ public class RouteService {
     }
 
     @SuppressWarnings("unchecked")
-    private void processMultipleUpstreamPlugin(Map<String, Object> plugins, Map<String, Object> context, List<String> upstreamIds) {
-        if (plugins.containsKey("multiple-upstream-plugin")) {
-            Object rulesObj = ((Map<String, Object>) plugins.get("multiple-upstream-plugin")).get("rules");
-            if (rulesObj instanceof List<?>) {
-                for (Object r : (List<?>) rulesObj) {
-                    if (r instanceof Map) {
-                        Map<String, Object> rule = (Map<String, Object>) r;
-                        String uid = (String) rule.get("upstream_id");
-                        if (uid != null) {
-                            UpstreamTemplate extraTpl = upstreamTplRepo.findByCode(uid);
-                            if (extraTpl != null) {
-                                Map<String, Object> ruleContext = new HashMap<>(context);
-                                Map<String, Object> up = templateRenderer.renderUpstream(extraTpl.getUpstreamTemplate(), ruleContext);
-                                String dynamicUid = IdUtil.generateId("u-", up, mapper);
-                                ruleContext.put("upstream_id", dynamicUid);
-                                up.put("id", dynamicUid);
-                                upstreamManager.ensureUpstream(up);
-                                rule.put("upstream_id", dynamicUid);
-                                upstreamIds.add(dynamicUid);
-                            } else {
-                                upstreamIds.add(uid);
-                            }
+    private void processMultipleUpstreamPlugin(Map<String, Object> plugins, Map<String, Object> context,
+                                              List<String> upstreamIds, UpstreamTemplate baseUpstreamTpl) {
+        if (!plugins.containsKey("multiple-upstream-plugin")) {
+            return;
+        }
+
+        Map<String, Object> pluginConf = (Map<String, Object>) plugins.get("multiple-upstream-plugin");
+        Object rulesObj = pluginConf.get("rules");
+        List<Object> rules = new ArrayList<>();
+
+        if (rulesObj instanceof List<?>) {
+            rules.addAll((List<Object>) rulesObj);
+        }
+
+        Object multiObj = context.get("multi_upstreams");
+        if (multiObj instanceof List<?> multiList && baseUpstreamTpl != null) {
+            for (Object itemObj : multiList) {
+                if (!(itemObj instanceof Map)) {
+                    continue;
+                }
+                Map<String, Object> item = new HashMap<>((Map<String, Object>) itemObj);
+
+                Map<String, Object> ruleContext = new HashMap<>(context);
+                ruleContext.putAll(item);
+
+                Map<String, Object> up = templateRenderer.renderUpstream(baseUpstreamTpl.getUpstreamTemplate(), ruleContext);
+                String dynamicUid = IdUtil.generateId("u-", up, mapper);
+                up.put("id", dynamicUid);
+                ruleContext.put("upstream_id", dynamicUid);
+                upstreamManager.ensureUpstream(up);
+                upstreamIds.add(dynamicUid);
+
+                Map<String, Object> newRule = new LinkedHashMap<>();
+                if (item.containsKey("name")) {
+                    newRule.put("name", item.get("name"));
+                }
+                // expected: match_key -> value for http_model contains
+                if (item.containsKey("match")) {
+                    List<List<String>> match = new ArrayList<>();
+                    match.add(Arrays.asList("http_model", "contains", String.valueOf(item.get("match"))));
+                    newRule.put("match", match);
+                }
+                newRule.put("upstream_id", dynamicUid);
+                if (item.containsKey("api_key")) {
+                    Map<String, Object> headers = new HashMap<>();
+                    headers.put("x-api-key", item.get("api_key"));
+                    newRule.put("inject_headers", headers);
+                }
+
+                rules.add(newRule);
+            }
+        } else if (rulesObj instanceof List<?>) {
+            // fallback to legacy behaviour where rules specify upstream template codes
+            for (Object r : (List<?>) rulesObj) {
+                if (r instanceof Map) {
+                    Map<String, Object> rule = (Map<String, Object>) r;
+                    String uid = (String) rule.get("upstream_id");
+                    if (uid != null) {
+                        UpstreamTemplate extraTpl = upstreamTplRepo.findByCode(uid);
+                        if (extraTpl != null) {
+                            Map<String, Object> ruleContext = new HashMap<>(context);
+                            Map<String, Object> up = templateRenderer.renderUpstream(extraTpl.getUpstreamTemplate(), ruleContext);
+                            String dynamicUid = IdUtil.generateId("u-", up, mapper);
+                            ruleContext.put("upstream_id", dynamicUid);
+                            up.put("id", dynamicUid);
+                            upstreamManager.ensureUpstream(up);
+                            rule.put("upstream_id", dynamicUid);
+                            upstreamIds.add(dynamicUid);
+                        } else {
+                            upstreamIds.add(uid);
                         }
                     }
+                    rules.add(rule);
                 }
             }
         }
+
+        pluginConf.put("rules", rules);
     }
 
     private Map<String, Object> buildRoute(RouteTemplate tpl, Map<String, Object> plugins, List<List<String>> vars, Map<String, Object> context) {

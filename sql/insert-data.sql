@@ -80,28 +80,7 @@ INSERT INTO route_templates (
  '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route", "upstream_id": "dummy-upstream"}',
  '{
     "multiple-upstream-plugin": {
-      "rules": [
-        {
-          "name": "GPT-4o",
-          "match": [
-            ["http_model", "contains", "gpt-4o"]
-          ],
-          "upstream_id": "upstream-gpt4o",
-          "inject_headers": {
-            "x-api-key": "gpt4o-key-abc"
-          }
-        },
-        {
-          "name": "GPT-3.5",
-          "match": [
-            ["http_model", "contains", "gpt3.5"]
-          ],
-          "upstream_id": "upstream-gpt35",
-          "inject_headers": {
-            "x-api-key": "gpt35-key-xyz"
-          }
-        }
-      ]
+      "rules": []
     }
  }',
  '{
