@@ -59,11 +59,13 @@ It includes custom plugins, a Spring Boot service for dynamic route subscription
    The script saves the output JSON files under `config/raw/`.
 
 5. **Run the curl test script**
+   The test script sends example subscription requests to the service. If the
+   service is not running on `localhost:8080`, override `SERVICE_URL`:
    ```bash
-   bash scripts/test-subscribe.sh
+   SERVICE_URL=http://localhost:8080 bash scripts/test-subscribe.sh
    ```
-   The script issues sample subscription requests demonstrating success and
-   failure cases, including rate limiting and multi-upstream routing.
+   Each case prints the response and HTTP status code so you can verify success
+   or failure.  Examples cover rate limiting and multi-upstream routing.
 
 ## What can this project do?
 

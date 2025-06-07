@@ -1,85 +1,65 @@
 #!/usr/bin/env bash
 
-# Simple test script for the APISIX Route Subscription Service.
-# Uses curl to hit the service with various payloads.
-# SERVICE_URL can be overridden via environment variable.
+# Test various subscription requests against the APISIX Route Subscription Service.
+# The service is expected to run on localhost:8080 by default.
+# Override SERVICE_URL to point to a different base URL.
 
 SERVICE_URL=${SERVICE_URL:-http://localhost:8080}
 
-print_header() {
-  echo -e "\n---- $1 ----"
+print_case() {
+  local title=$1
+  local data=$2
+
+  echo -e "\n---- $title ----"
+  # -s suppress progress, -D - prints headers to stdout
+  curl -s -D - -o /tmp/resp.$$ -H "Content-Type: application/json" \
+       -d "$data" "$SERVICE_URL/apisix/subscribe"
+  local status=$(grep -m1 HTTP /tmp/resp.$$ | awk '{print $2}')
+  cat /tmp/resp.$$
+  echo "HTTP_STATUS:$status"
+  rm /tmp/resp.$$
 }
 
-# 1. Valid subscription
-print_header "Valid subscription (persona-basic)"
-curl -i -X POST "$SERVICE_URL/apisix/subscribe" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "userName": "alice",
-      "personaType": "tenant",
-      "apiKey": "alice-key",
-      "apis": ["getUserInfo"],
-      "extraParams": {}
-    }'
-echo
+print_case "Valid subscription (persona-basic)" '{
+  "userName": "alice",
+  "personaType": "tenant",
+  "apiKey": "alice-key",
+  "apis": ["getUserInfo"],
+  "extraParams": {}
+}'
 
-# 2. Unknown API should fail
-print_header "Unknown API"
-curl -i -X POST "$SERVICE_URL/apisix/subscribe" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "userName": "alice",
-      "personaType": "tenant",
-      "apiKey": "alice-key",
-      "apis": ["doesNotExist"]
-    }'
-echo
+print_case "Unknown API" '{
+  "userName": "alice",
+  "personaType": "tenant",
+  "apiKey": "alice-key",
+  "apis": ["doesNotExist"]
+}'
 
-# 3. Missing required field
-print_header "Missing personaType"
-curl -i -X POST "$SERVICE_URL/apisix/subscribe" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "userName": "bob",
-      "apiKey": "bob-key",
-      "apis": ["getUserInfo"]
-    }'
-echo
+print_case "Missing personaType" '{
+  "userName": "bob",
+  "apiKey": "bob-key",
+  "apis": ["getUserInfo"]
+}'
 
-# 4. Invalid limit-count parameters
-print_header "Invalid limit-count parameters"
-curl -i -X POST "$SERVICE_URL/apisix/subscribe" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "userName": "carol",
-      "personaType": "provider",
-      "apiKey": "carol-key",
-      "apis": ["limitCountTest"],
-      "extraParams": { "count": 10 }
-    }'
-echo
+print_case "Invalid limit-count parameters" '{
+  "userName": "carol",
+  "personaType": "provider",
+  "apiKey": "carol-key",
+  "apis": ["limitCountTest"],
+  "extraParams": { "count": 10 }
+}'
 
-# 5. Valid limit-count parameters
-print_header "Valid limit-count parameters"
-curl -i -X POST "$SERVICE_URL/apisix/subscribe" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "userName": "carol",
-      "personaType": "provider",
-      "apiKey": "carol-key",
-      "apis": ["limitCountTest"],
-      "extraParams": { "count": 10, "time_window": 60 }
-    }'
-echo
+print_case "Valid limit-count parameters" '{
+  "userName": "carol",
+  "personaType": "provider",
+  "apiKey": "carol-key",
+  "apis": ["limitCountTest"],
+  "extraParams": { "count": 10, "time_window": 60 }
+}'
 
-# 6. Multiple upstream router
-print_header "Multiple upstream router"
-curl -i -X POST "$SERVICE_URL/apisix/subscribe" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "userName": "dave",
-      "personaType": "tenant",
-      "apiKey": "dave-key",
-      "apis": ["modelInference"]
-    }'
-echo
+print_case "Multiple upstream router" '{
+  "userName": "dave",
+  "personaType": "tenant",
+  "apiKey": "dave-key",
+  "apis": ["modelInference"]
+}'
