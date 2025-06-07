@@ -29,11 +29,16 @@ public class RouteService {
     public void bindSmart(String userName, String personaType, String apiKey, List<String> apis, Map<String, Object> extraParams) {
         for (String apiName : apis) {
             ApiDefinition api = apiRepo.findByName(apiName);
+
+            if (api == null) {
+                throw new RuntimeException("API not found: " + apiName);
+            }
+
             RouteTemplate tpl = tplRepo.findByCode(api.getRouteTemplateCode());
             UpstreamTemplate upstreamTpl = upstreamTplRepo.findByCode(api.getUpstreamTemplateCode());
 
-            if (api == null || tpl == null || upstreamTpl == null) {
-                throw new RuntimeException("API or Template not found for: " + apiName);
+            if (tpl == null || upstreamTpl == null) {
+                throw new RuntimeException("Template not found for API: " + apiName);
             }
 
             Map<String, Object> context = new HashMap<>();
