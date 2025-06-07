@@ -41,14 +41,27 @@ public class RouteService {
             Map<String, Object> context = prepareContext(api, userName, personaType, apiKey, extraParams);
             validateTemplates(tpl, upstreamTpl, context);
 
-            String upstreamIdFromTpl = createUpstream(upstreamTpl, context);
+            boolean useMulti = false;
+            if (extraParams != null) {
+                Object mu = extraParams.get("multi_upstreams");
+                useMulti = mu instanceof List && !((List<?>) mu).isEmpty();
+            }
+
             List<String> upstreamIds = new ArrayList<>();
-            upstreamIds.add(upstreamIdFromTpl);
+            String upstreamIdFromTpl = null;
+            if (!useMulti) {
+                upstreamIdFromTpl = createUpstream(upstreamTpl, context);
+                upstreamIds.add(upstreamIdFromTpl);
+            }
 
             List<List<String>> vars = templateRenderer.renderVars(tpl.getVarsTemplate(), personaType, context);
             Map<String, Object> plugins = templateRenderer.renderPlugins(tpl.getPluginTemplate(), context);
 
             processMultipleUpstreamPlugin(plugins, context, upstreamIds, upstreamTpl);
+
+            if (useMulti && !upstreamIds.isEmpty()) {
+                context.put("upstream_id", upstreamIds.get(0));
+            }
 
             Map<String, Object> route = buildRoute(tpl, plugins, vars, context);
             String routeId = (String) route.get("id");
