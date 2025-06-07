@@ -80,13 +80,15 @@ public class RouteService {
 
             context.put("limit_count_plugin", limitCountPlugin);
 
-            Map<String, String> allTemplates = Map.of(
+            Map<String, String> basicTemplates = Map.of(
                 "route_template", tpl.getRouteTemplate(),
                 "plugin_template", tpl.getPluginTemplate(),
-                "vars_template", tpl.getVarsTemplate(),
-                "upstream_template", upstreamTpl.getUpstreamTemplate()
+                "vars_template", tpl.getVarsTemplate()
             );
-            TemplateValidator.validateAllTemplates(allTemplates, context);
+            TemplateValidator.validateAllTemplates(basicTemplates, context);
+            TemplateValidator.validateTemplateVariables(
+                    upstreamTpl.getUpstreamTemplate(), context,
+                    "upstream_template", Set.of("upstream_id"));
             TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), context);
 
             Map<String, Object> desiredUpstream = templateRenderer.renderUpstream(upstreamTpl.getUpstreamTemplate(), context);
