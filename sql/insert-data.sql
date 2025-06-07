@@ -53,7 +53,7 @@ INSERT INTO route_templates (
 -- auth-limit（count 與 time_window 必須同時存在）
 ('auth-limit',
  'auth with optional rate limit（count 與 time_window 必須成對出現）',
- '{"uri": "{{uri}}", "name": "{{userName}}-{{name}}", "methods": ["GET"]}',
+ '{"uri": "{{uri}}", "name": "{{userName}}-{{name}}", "methods": ["GET"], "upstream_id": "{{upstream_id}}"}',
  '{
     "custom-auth": {
         "persona_type": "{{personaType}}",
