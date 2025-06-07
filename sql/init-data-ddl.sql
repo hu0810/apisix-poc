@@ -1,5 +1,7 @@
 -- 建立資料庫並切換
-CREATE DATABASE IF NOT EXISTS apisix;
+CREATE DATABASE IF NOT EXISTS apisix
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 USE apisix;
 
 -- 1. Route 模板表：定義共用路由配置，支援 Pebble 模板渲染
@@ -11,7 +13,7 @@ CREATE TABLE IF NOT EXISTS route_templates (
     plugin_template TEXT NOT NULL,            -- JSON 格式，包含 Pebble 條件（非純 JSON）
     vars_template JSON NOT NULL,              -- personaType 對應 vars 條件，e.g. {"tenant": [[...]]}
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 2. Upstream 模板表：支援 Pebble 語法渲染，動態生成 upstream 結構
 CREATE TABLE IF NOT EXISTS upstream_templates (
@@ -20,7 +22,7 @@ CREATE TABLE IF NOT EXISTS upstream_templates (
     description VARCHAR(255),
     upstream_template TEXT NOT NULL,          -- 支援 Pebble 渲染
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3. API 定義表：每筆 API 使用一組 route 與 upstream 模板組合
 CREATE TABLE IF NOT EXISTS api_definitions (
@@ -33,7 +35,7 @@ CREATE TABLE IF NOT EXISTS api_definitions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (route_template_code) REFERENCES route_templates(code) ON DELETE RESTRICT,
     FOREIGN KEY (upstream_template_code) REFERENCES upstream_templates(code) ON DELETE RESTRICT
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 4. API 訂閱記錄表：記錄使用者申請的 API 與訂閱變數與 context
 CREATE TABLE IF NOT EXISTS api_subscriptions (
@@ -47,4 +49,4 @@ CREATE TABLE IF NOT EXISTS api_subscriptions (
     template_context JSON NOT NULL,              -- 渲染用變數，如 userName、uri、upstream_id 等
     subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (api_id) REFERENCES api_definitions(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
