@@ -13,19 +13,26 @@ import java.util.Objects;
 
 @Component
 public class UpstreamManager {
+    private static final String DEFAULT_ADMIN_URL = "http://localhost:9180/apisix/admin";
+    private static final String DEFAULT_ADMIN_KEY = "admin123";
+
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
+    private final String adminUrl;
+    private final String adminKey;
 
     public UpstreamManager(RestTemplate restTemplate, ObjectMapper mapper) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
+        this.adminUrl = System.getenv().getOrDefault("APISIX_ADMIN_URL", DEFAULT_ADMIN_URL);
+        this.adminKey = System.getenv().getOrDefault("APISIX_ADMIN_API_KEY", DEFAULT_ADMIN_KEY);
     }
 
     public void ensureUpstream(Map<String, Object> desiredUpstream) {
         String upstreamId = (String) desiredUpstream.get("id");
-        String url = "http://localhost:9180/apisix/admin/upstreams/" + upstreamId;
+        String url = adminUrl + "/upstreams/" + upstreamId;
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-API-KEY", "admin123");
+        headers.set("X-API-KEY", adminKey);
 
         boolean needsCreate = true;
         try {

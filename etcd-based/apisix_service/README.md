@@ -19,3 +19,10 @@ A minimal Spring Boot service that dynamically subscribes user, API, and persona
 - **Jackson** (for JSON processing)
 - **Lombok**
 - **Maven**
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and adjust the following variables if needed:
+
+- `APISIX_ADMIN_URL` – base URL of the APISIX Admin API.
+- `APISIX_ADMIN_API_KEY` – API key for accessing the Admin API.
