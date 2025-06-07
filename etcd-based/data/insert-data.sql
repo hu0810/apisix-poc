@@ -58,17 +58,7 @@ INSERT INTO route_templates (
     "custom-auth": {
         "persona_type": "{{personaType}}",
         "user": "{{userName}}"
-    }
-    {% if count and time_window %},
-    "limit-count": {
-        "count": {{count}},
-        "time_window": {{time_window}},
-        "key": "remote_addr",
-        "policy": "local"
-    }
-    {% elseif count or time_window %},
-    "__template_warning__": "limit-count plugin requires both count and time_window to be set."
-    {% endif %}
+    }{{limit_count_plugin}}
  }',
  '{
     "provider": [
@@ -130,16 +120,8 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
         "requests": 1000000,
         "size": 5000
     },
-    "nodes": [
-        {% for node in nodes %}
-        {
-            "host": "{{node.host}}",
-            "port": {{node.port}},
-            "weight": {{node.weight}}
-        }{% if not loop.last %},{% endif %}
-        {% endfor %}
-    ]
- }');
+    "nodes": {{nodes_json}}
+}');
 
 -- 插入 api_definitions（保持不變）
 INSERT INTO api_definitions (
