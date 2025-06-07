@@ -2,8 +2,8 @@ package com.example.apisix.service;
 
 import com.example.apisix.entity.*;
 import com.example.apisix.repository.*;
-import com.example.apisix.utils.TemplateUtil;
 import com.example.apisix.utils.TemplateValidator;
+import com.example.apisix.utils.IdUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -92,13 +92,7 @@ public class RouteService {
             TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), context);
 
             Map<String, Object> desiredUpstream = templateRenderer.renderUpstream(upstreamTpl.getUpstreamTemplate(), context);
-            String upstreamHash;
-            try {
-                upstreamHash = TemplateUtil.shortHash(mapper.writeValueAsString(desiredUpstream));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to hash upstream", e);
-            }
-            String upstreamIdFromTpl = "u-" + upstreamHash;
+            String upstreamIdFromTpl = IdUtil.generateId("u-", desiredUpstream, mapper);
             desiredUpstream.put("id", upstreamIdFromTpl);
             context.put("upstream_id", upstreamIdFromTpl);
             upstreamManager.ensureUpstream(desiredUpstream);
@@ -121,13 +115,7 @@ public class RouteService {
                                 if (extraTpl != null) {
                                     Map<String, Object> ruleContext = new HashMap<>(context);
                                     Map<String, Object> up = templateRenderer.renderUpstream(extraTpl.getUpstreamTemplate(), ruleContext);
-                                    String ruleHash;
-                                    try {
-                                        ruleHash = TemplateUtil.shortHash(mapper.writeValueAsString(up));
-                                    } catch (JsonProcessingException e) {
-                                        throw new RuntimeException("Failed to hash upstream", e);
-                                    }
-                                    String dynamicUid = "u-" + ruleHash;
+                                    String dynamicUid = IdUtil.generateId("u-", up, mapper);
                                     ruleContext.put("upstream_id", dynamicUid);
                                     up.put("id", dynamicUid);
                                     upstreamManager.ensureUpstream(up);
@@ -144,10 +132,11 @@ public class RouteService {
 
             Map<String, Object> route = templateRenderer.renderRoute(tpl.getRouteTemplate(), context);
 
-            String routeId = "autogen_" + api.getName() + "_" + userName;
-            route.put("id", routeId);
             route.put("plugins", plugins);
             route.put("vars", vars);
+            String routeId = IdUtil.generateId("r-", route, mapper);
+            route.put("id", routeId);
+
             routeManager.createOrUpdateRoute(routeId, route);
 
             ApiSubscription record = apiSubscriptionRepo
