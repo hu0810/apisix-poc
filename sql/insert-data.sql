@@ -152,6 +152,7 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
  'OpenAI 專用 Upstream，帶有使用者動態 ID',
  '{
     "id": "{{upstream_id}}",
+    "name": "{{userName}}-{{name}}-upstream",
     "type": "roundrobin",
     "scheme": "http",
     "pass_host": "rewrite",
