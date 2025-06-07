@@ -53,11 +53,24 @@ public class TemplateValidator {
     /**
      * 驗證模板中所有必填變數是否有出現在 context 中
      */
-    public static void validateTemplateVariables(String template, Map<String, Object> context, String templateName) {
+    public static void validateTemplateVariables(String template,
+                                                 Map<String, Object> context,
+                                                 String templateName) {
+        validateTemplateVariables(template, context, templateName, Collections.emptySet());
+    }
+
+    /**
+     * 驗證模板中所有必填變數是否有出現在 context 中，允許忽略部分變數
+     */
+    public static void validateTemplateVariables(String template,
+                                                 Map<String, Object> context,
+                                                 String templateName,
+                                                 Set<String> ignoreVars) {
         Set<String> allVars = extractAllVariables(template);
         Set<String> optionalVars = extractOptionalVariables(template);
         Set<String> requiredVars = new HashSet<>(allVars);
         requiredVars.removeAll(optionalVars);
+        requiredVars.removeAll(ignoreVars);
 
         Set<String> missing = requiredVars.stream()
                 .filter(key -> !context.containsKey(key))
