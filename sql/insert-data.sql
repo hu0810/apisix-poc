@@ -6,7 +6,7 @@ INSERT INTO route_templates (
 -- persona-basic
 ('persona-basic',
  '通用身份驗證 API，支援多 personaType',
- '{"uri": "{{uri}}", "name": "{{userName}}-{{name}}", "methods": ["GET"], "upstream_id": "common-upstream"}',
+ '{"uri": "{{uri}}", "name": "{{userName}}-{{name}}", "methods": ["GET"], "upstream_id": "{{upstream_id}}"}',
  '{
     "custom-auth": {
         "persona_type": "{{personaType}}",
