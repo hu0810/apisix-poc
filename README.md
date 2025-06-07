@@ -22,6 +22,12 @@ It includes custom plugins, a Spring Boot service for dynamic route subscription
    sudo chmod +x scripts/export-settings.sh
    ```
 
+   Create the `etcd_data` directory for the etcd container:
+   ```bash
+   mkdir -p etcd_data
+   chmod 755 etcd_data
+   ```
+
    Copy `.env.example` to `.env` and verify the contents:
    ```bash
    cp .env.example .env
