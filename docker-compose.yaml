@@ -13,7 +13,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./data:/docker-entrypoint-initdb.d
+      - ./sql:/docker-entrypoint-initdb.d
   etcd:
     container_name: etcd
     image: bitnami/etcd:3.5.17
@@ -38,7 +38,7 @@ services:
     container_name: apisix
     image: apache/apisix:3.10.0-debian
     volumes:
-      - ./apisix_conf/conf.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./config/apisix/conf.yaml:/usr/local/apisix/conf/config.yaml:ro
       - ./plugins/custom-auth.lua:/usr/local/apisix/apisix/plugins/custom-auth.lua:ro
       - ./plugins/dynamic-upstream.lua:/usr/local/apisix/apisix/plugins/dynamic-upstream.lua:ro
       - ./plugins/multiple-upstream-plugin.lua:/usr/local/apisix/apisix/plugins/multiple-upstream-plugin.lua:ro
@@ -62,7 +62,7 @@ services:
     ports:
       - "9000:9000"  # dashboard 預設 port
     volumes:
-      - ./dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
+      - ./config/dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
     depends_on:
       - etcd
     networks:
