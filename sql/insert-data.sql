@@ -166,7 +166,7 @@ INSERT INTO upstream_templates (code, description, upstream_template) VALUES
     },
     "nodes": {{nodes_json}}
 }');
-
+INSERT INTO upstream_templates (code, description, upstream_template) VALUES
 ('dummy-upstream',
  '占位 upstream',
  '{
