@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
-public class ApisixRouteBindingServiceApplication {
+public class ApisixRouteSubscriptionServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ApisixRouteBindingServiceApplication.class, args);
+        SpringApplication.run(ApisixRouteSubscriptionServiceApplication.class, args);
     }
 
     @Bean

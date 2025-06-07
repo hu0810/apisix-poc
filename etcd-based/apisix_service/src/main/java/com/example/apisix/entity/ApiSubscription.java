@@ -6,9 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "api_bindings")
+@Table(name = "api_subscriptions")
 @Data
-public class ApiBinding {
+public class ApiSubscription {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,12 +23,12 @@ public class ApiBinding {
     private String upstreamId;
 
     @Column(columnDefinition = "TEXT")
-    private String boundVars;
+    private String subscribedVars;
 
     @Column(columnDefinition = "TEXT")
     private String templateContext;
 
-    private LocalDateTime boundAt = LocalDateTime.now();
+    private LocalDateTime subscribedAt = LocalDateTime.now();
 
     @Column(name = "api_id")
     private Long apiId;

@@ -1,6 +1,6 @@
-# APISIX Route Binding Service
+# APISIX Route Subscription Service
 
-A minimal Spring Boot service that dynamically binds user, API, and personaType information into [Apache APISIX](https://apisix.apache.org/) via the Admin API using template-driven route configuration.
+A minimal Spring Boot service that dynamically subscribes user, API, and personaType information into [Apache APISIX](https://apisix.apache.org/) via the Admin API using template-driven route configuration.
 
 ## 🧩 Features
 
