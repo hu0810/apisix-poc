@@ -112,15 +112,28 @@ public class RouteService {
                 if (rulesObj instanceof List<?>) {
                     for (Object r : (List<?>) rulesObj) {
                         if (r instanceof Map) {
-                            String uid = (String) ((Map<?, ?>) r).get("upstream_id");
+                            Map<String, Object> rule = (Map<String, Object>) r;
+                            String uid = (String) rule.get("upstream_id");
                             if (uid != null) {
                                 UpstreamTemplate extraTpl = upstreamTplRepo.findByCode(uid);
                                 if (extraTpl != null) {
-                                    Map<String, Object> up = templateRenderer.renderUpstream(extraTpl.getUpstreamTemplate(), context);
-                                    up.put("id", uid);
+                                    Map<String, Object> ruleContext = new HashMap<>(context);
+                                    Map<String, Object> up = templateRenderer.renderUpstream(extraTpl.getUpstreamTemplate(), ruleContext);
+                                    String ruleHash;
+                                    try {
+                                        ruleHash = TemplateUtil.shortHash(mapper.writeValueAsString(up));
+                                    } catch (JsonProcessingException e) {
+                                        throw new RuntimeException("Failed to hash upstream", e);
+                                    }
+                                    String dynamicUid = "u-" + ruleHash;
+                                    ruleContext.put("upstream_id", dynamicUid);
+                                    up.put("id", dynamicUid);
                                     upstreamManager.ensureUpstream(up);
+                                    rule.put("upstream_id", dynamicUid);
+                                    upstreamIds.add(dynamicUid);
+                                } else {
+                                    upstreamIds.add(uid);
                                 }
-                                upstreamIds.add(uid);
                             }
                         }
                     }
