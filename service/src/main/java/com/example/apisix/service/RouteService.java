@@ -101,12 +101,15 @@ public class RouteService {
     }
 
     private void validateTemplates(RouteTemplate tpl, UpstreamTemplate upstreamTpl, Map<String, Object> context) {
-        Map<String, String> basicTemplates = Map.of(
-            "route_template", tpl.getRouteTemplate(),
-            "plugin_template", tpl.getPluginTemplate(),
-            "vars_template", tpl.getVarsTemplate()
-        );
-        TemplateValidator.validateAllTemplates(basicTemplates, context);
+        TemplateValidator.validateTemplateVariables(
+                tpl.getRouteTemplate(), context,
+                "route_template", Set.of("upstream_id"));
+        TemplateValidator.validateTemplateVariables(
+                tpl.getPluginTemplate(), context,
+                "plugin_template");
+        TemplateValidator.validateTemplateVariables(
+                tpl.getVarsTemplate(), context,
+                "vars_template");
         TemplateValidator.validateTemplateVariables(
                 upstreamTpl.getUpstreamTemplate(), context,
                 "upstream_template", Set.of("upstream_id"));
