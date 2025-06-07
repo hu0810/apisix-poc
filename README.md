@@ -58,6 +58,13 @@ It includes custom plugins, a Spring Boot service for dynamic route subscription
    ```
    The script saves the output JSON files under `config/raw/`.
 
+5. **Run the curl test script**
+   ```bash
+   bash scripts/test-subscribe.sh
+   ```
+   The script issues sample subscription requests demonstrating success and
+   failure cases, including rate limiting and multi-upstream routing.
+
 ## What can this project do?
 
 - Demonstrates how to configure and extend APISIX with custom plugins.
