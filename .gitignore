@@ -1,2 +1,3 @@
 **/target/
 **/etcd_data/
+.env
