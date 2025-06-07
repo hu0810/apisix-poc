@@ -77,7 +77,7 @@ INSERT INTO route_templates (
 ) VALUES
 ('model-upstream-router',
  '根據 model header 決定 upstream，並注入對應的 key',
- '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route", "upstream_id": "{{upstream_id}}"}',
+ '{"uri": "/inference", "methods": ["POST"], "name": "{{userName}}-model-route"}',
  '{
     "multiple-upstream-plugin": {
       "rules": []

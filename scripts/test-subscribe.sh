@@ -70,10 +70,6 @@ print_case "Multiple upstream router" '{
   "apiKey": "dave-key",
   "apis": ["modelInference"],
   "extraParams": {
-    "upstream_host": "openai.example.com",
-    "nodes": [
-      { "host": "openai.example.com", "port": 80, "weight": 1 }
-    ],
     "multi_upstreams": [
       {
         "name": "GPT-4o",
@@ -88,6 +84,30 @@ print_case "Multiple upstream router" '{
         "api_key": "gpt35-key-xyz",
         "upstream_host": "gpt35.example.com",
         "nodes": [ { "host": "gpt35.example.com", "port": 80, "weight": 1 } ]
+      }
+    ]
+  }
+}'
+
+print_case "Multiple upstream router" '{
+  "userName": "frank",
+  "personaType": "tenant",
+  "apiKey": "frank-key",
+  "apis": ["modelInference"],
+  "extraParams": {
+    "multi_upstreams": [
+      {
+        "name": "GPT-4o",
+        "match": "gpt-4o",
+        "api_key": "gpt4o-key-abc",
+        "upstream_host": "gpt4o.example.com",
+        "nodes": [ { "host": "gpt4o.example.com", "port": 80, "weight": 1 } ]
+      },
+      {
+        "name": "GPT-3.5",
+        "match": "gpt3.5",
+        "api_key": "gpt35-key-xyz",
+        "upstream_host": "gpt35.example.com"
       }
     ]
   }
