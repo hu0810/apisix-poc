@@ -141,7 +141,7 @@ public class RouteService {
                 itemCtx.putAll((Map<String, Object>) obj);
                 TemplateValidator.validateTemplateVariables(
                         upstreamTpl.getUpstreamTemplate(), itemCtx,
-                        "upstream_template", Set.of("upstream_id"));
+                        "upstream_template", Set.of("upstream_id", "nodes_json"));
                 TemplateValidator.validateIfNodeTemplateUsed(upstreamTpl.getUpstreamTemplate(), itemCtx);
             }
         }
