@@ -5,6 +5,7 @@ plugins:
   - custom-auth   # ← 你要用的 plugin 要出現在這裡
   - proxy-rewrite
   - dynamic-upstream
+  - multiple-upstream-plugin
   - limit-count
 
 deployment:

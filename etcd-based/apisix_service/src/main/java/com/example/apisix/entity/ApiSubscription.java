@@ -19,8 +19,8 @@ public class ApiSubscription {
     @Column(name = "route_id")
     private String routeId;
 
-    @Column(name = "upstream_id")
-    private String upstreamId;
+    @Column(name = "upstream_ids", columnDefinition = "TEXT")
+    private String upstreamIds;
 
     @Column(columnDefinition = "TEXT")
     private String subscribedVars;

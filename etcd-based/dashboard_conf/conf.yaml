@@ -91,6 +91,7 @@ plugins:
   - ai
   - cas-auth
   - dynamic-upstream
+  - multiple-upstream-plugin
 authentication:
   secret: super-secret-key-123456
   expire_time: 3600  # token 過期時間（秒）

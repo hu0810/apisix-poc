@@ -41,6 +41,7 @@ services:
       - ./apisix_conf/conf.yaml:/usr/local/apisix/conf/config.yaml:ro
       - ./plugins/custom-auth.lua:/usr/local/apisix/apisix/plugins/custom-auth.lua:ro
       - ./plugins/dynamic-upstream.lua:/usr/local/apisix/apisix/plugins/dynamic-upstream.lua:ro
+      - ./plugins/multiple-upstream-plugin.lua:/usr/local/apisix/apisix/plugins/multiple-upstream-plugin.lua:ro
 
     restart: always
     depends_on:
