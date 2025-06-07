@@ -16,6 +16,12 @@ public class ApiBinding {
     private String userName;
     private String personaType;
 
+    @Column(name = "route_id")
+    private String routeId;
+
+    @Column(name = "upstream_id")
+    private String upstreamId;
+
     @Column(columnDefinition = "TEXT")
     private String boundVars;
 

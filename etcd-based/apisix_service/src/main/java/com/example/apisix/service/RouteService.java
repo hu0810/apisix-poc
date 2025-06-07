@@ -159,6 +159,8 @@ public class RouteService {
 
             record.setUserName(userName);
             record.setPersonaType(personaType);
+            record.setRouteId(routeId);
+            record.setUpstreamId(upstreamIdFromTpl);
             record.setApiId(api.getId());
             record.setBoundAt(LocalDateTime.now());
             try {
