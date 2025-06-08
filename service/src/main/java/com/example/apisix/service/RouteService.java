@@ -54,8 +54,16 @@ public class RouteService {
                 upstreamIds.add(upstreamIdFromTpl);
             }
 
-            List<List<String>> vars = templateRenderer.renderVars(tpl.getVarsTemplate(), personaType, context);
-            Map<String, Object> plugins = templateRenderer.renderPlugins(tpl.getPluginTemplate(), context);
+            Map<String, Object> route = templateRenderer.renderRoute(
+                tpl.getRouteTemplate(),
+                tpl.getPluginTemplate(),
+                tpl.getVarsTemplate(),
+                personaType,
+                context
+            );
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> plugins = (Map<String, Object>) route.get("plugins");
 
             processMultipleUpstreamPlugin(plugins, context, upstreamIds, upstreamTpl);
 
@@ -63,10 +71,11 @@ public class RouteService {
                 context.put("upstream_id", upstreamIds.get(0));
             }
 
-            Map<String, Object> route = buildRoute(tpl, plugins, vars, context);
-            String routeId = (String) route.get("id");
+            String routeId = addRouteId(route);
             routeManager.createOrUpdateRoute(routeId, route);
 
+            @SuppressWarnings("unchecked")
+            List<List<String>> vars = (List<List<String>>) route.get("vars");
             saveSubscriptionRecord(api, userName, personaType, routeId, upstreamIds, vars, context);
         }
     }
@@ -262,13 +271,10 @@ public class RouteService {
         pluginConf.put("rules", rules);
     }
 
-    private Map<String, Object> buildRoute(RouteTemplate tpl, Map<String, Object> plugins, List<List<String>> vars, Map<String, Object> context) {
-        Map<String, Object> route = templateRenderer.renderRoute(tpl.getRouteTemplate(), context);
-        route.put("plugins", plugins);
-        route.put("vars", vars);
+    private String addRouteId(Map<String, Object> route) {
         String routeId = IdUtil.generateId("r-", route, mapper);
         route.put("id", routeId);
-        return route;
+        return routeId;
     }
 
     private void saveSubscriptionRecord(ApiDefinition api, String userName, String personaType, String routeId,

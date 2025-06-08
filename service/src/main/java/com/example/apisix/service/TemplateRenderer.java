@@ -62,4 +62,25 @@ public class TemplateRenderer {
             throw new RuntimeException("Failed to parse route_template JSON", e);
         }
     }
+
+    /**
+     * Render the route template and inject rendered plugins and vars.
+     * <p>
+     * This is a convenience method that combines the functionality of
+     * {@link #renderVars(String, String, Map)} and
+     * {@link #renderPlugins(String, Map)} when building a route object.
+     */
+    public Map<String, Object> renderRoute(
+            String routeTemplate,
+            String pluginTemplate,
+            String varsTemplate,
+            String personaType,
+            Map<String, Object> context) {
+        Map<String, Object> route = renderRoute(routeTemplate, context);
+        Map<String, Object> plugins = renderPlugins(pluginTemplate, context);
+        List<List<String>> vars = renderVars(varsTemplate, personaType, context);
+        route.put("plugins", plugins);
+        route.put("vars", vars);
+        return route;
+    }
 }
