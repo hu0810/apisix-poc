@@ -207,20 +207,28 @@ public class RouteService {
                 upstreamIds.add(dynamicUid);
 
                 Map<String, Object> newRule = new LinkedHashMap<>();
-                if (item.containsKey("name")) {
-                    newRule.put("name", item.get("name"));
-                }
-                // expected: match_key -> value for http_model contains
+
                 if (item.containsKey("match")) {
-                    List<List<String>> match = new ArrayList<>();
-                    match.add(Arrays.asList("http_model", "contains", String.valueOf(item.get("match"))));
+                    Map<String, Object> match = new LinkedHashMap<>();
+                    List<Map<String, Object>> vars = new ArrayList<>();
+                    Map<String, Object> cond = new LinkedHashMap<>();
+                    cond.put("var_name", "http_x_model");
+                    cond.put("operator", "==");
+                    cond.put("value", String.valueOf(item.get("match")));
+                    vars.add(cond);
+                    match.put("vars", vars);
                     newRule.put("match", match);
                 }
+
                 newRule.put("upstream_id", dynamicUid);
+
                 if (item.containsKey("api_key")) {
-                    Map<String, Object> headers = new HashMap<>();
-                    headers.put("x-api-key", item.get("api_key"));
-                    newRule.put("inject_headers", headers);
+                    List<Map<String, Object>> headers = new ArrayList<>();
+                    Map<String, Object> header = new LinkedHashMap<>();
+                    header.put("key", "api-key");
+                    header.put("value", String.valueOf(item.get("api_key")));
+                    headers.add(header);
+                    newRule.put("headers", headers);
                 }
 
                 rules.add(newRule);

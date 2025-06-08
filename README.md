@@ -103,7 +103,7 @@ requested API names and optional `extraParams`. For each API the service:
 
 `extraParams.multi_upstreams` allows defining additional upstreams and routing
 rules for the `multiple-upstream-plugin`. Each item may specify a `match` value
-for the `http_model` header, an optional `api_key` header to inject and custom
+for the `http_x_model` header, an optional `api-key` header to inject and custom
 upstream settings.
 
 ### Notes
