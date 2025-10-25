@@ -182,3 +182,4 @@ INSERT INTO api_definitions (
 ('summarizeText', '/ai/summarize', 'ai-service', 'ai-dynamic', 'openai-upstream'),
 ('limitCountTest', '/ai/summarize', 'ai-service', 'auth-limit', 'openai-upstream'),
 ('modelInference', '/inference', 'ai-service', 'model-upstream-router', 'openai-upstream');
+    

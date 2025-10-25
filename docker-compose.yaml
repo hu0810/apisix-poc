@@ -14,6 +14,9 @@ services:
       - "3306:3306"
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - apisix
+
   etcd:
     container_name: etcd
     image: bitnami/etcd:3.5.17
@@ -32,7 +35,7 @@ services:
     ports:
       - "2379:2379"
     networks:
-      apisix:
+      - apisix
 
   apisix:
     container_name: apisix
@@ -42,31 +45,104 @@ services:
       - ./plugins/custom-auth.lua:/usr/local/apisix/apisix/plugins/custom-auth.lua:ro
       - ./plugins/dynamic-upstream.lua:/usr/local/apisix/apisix/plugins/dynamic-upstream.lua:ro
       - ./plugins/multiple-upstream-plugin.lua:/usr/local/apisix/apisix/plugins/multiple-upstream-plugin.lua:ro
-
     restart: always
     depends_on:
       etcd:
         condition: service_healthy
     ports:
-      - "9180:9180/tcp"
-      - "9080:9080/tcp"
-      - "9091:9091/tcp"
-      - "9443:9443/tcp"
-      - "9092:9092/tcp"
+      - "9180:9180"
+      - "9080:9080"
+      - "9091:9091"
+      - "9443:9443"
+      - "9092:9092"
     networks:
-      apisix:
+      - apisix
 
   apisix-dashboard:
     image: apache/apisix-dashboard:3.0.0-alpine
     container_name: apisix-dashboard
     ports:
-      - "9000:9000"  # dashboard 預設 port
+      - "9000:9000"
     volumes:
       - ./config/dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
     depends_on:
       - etcd
     networks:
-      apisix:
+      - apisix
+
+  java-app:
+    build:
+      context: ./service  # 你的 Spring Boot 專案目錄
+    container_name: java-app
+    ports:
+      - "8080:8080"
+    networks:
+      - apisix
+    depends_on:
+      - mariadb
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/apisix
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin
+
+
+  # ============================================================
+  # 🧩 新增部分：監控 / AIOps 環境
+  # ============================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - apisix
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - apisix
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    restart: always
+    ports:
+      - "9100:9100"
+    networks:
+      - apisix
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8088:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - apisix
+
+  aiops:
+    build:
+      context: ./monitoring/aiops
+    container_name: aiops
+    depends_on:
+      - prometheus
+    networks:
+      - apisix
+    volumes:
+      - ./monitoring/aiops/model:/app/model
 
 networks:
   apisix:

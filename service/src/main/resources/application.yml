@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:3306/apisix
+    url: jdbc:mariadb://mariadb:3306/apisix
     username: admin
     password: admin
     driver-class-name: org.mariadb.jdbc.Driver
@@ -17,3 +17,15 @@ spring:
   jackson:
     serialization:
       indent-output: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
